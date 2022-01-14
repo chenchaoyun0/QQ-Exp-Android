@@ -7,19 +7,29 @@ import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.lifecycle.LifecycleCoroutineScope
 import kotlinx.coroutines.*
+import okhttp3.*
 import qhaty.qqex.*
 import qhaty.qqex.ui.expWithRebuildDialog
 import qhaty.qqex.util.*
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 
-class Ex(private val tv: TextView, private val lifecycleScope: LifecycleCoroutineScope, private val activity: Activity) {
+class Ex(
+    private val tv: TextView,
+    private val lifecycleScope: LifecycleCoroutineScope,
+    private val activity: Activity
+) {
     class Progress(var per: Int, @StringRes var msg: Int)
 
     private var progress: Progress = Progress(0, R.string.awa)
         set(value) {
             field = value
-            val s: String = String.format("%.1f %%\n%s", value.per / 10.0, activity.resources.getString(value.msg))
+            val s: String = String.format(
+                "%.1f %%\n%s",
+                value.per / 10.0,
+                activity.resources.getString(value.msg)
+            )
             lifecycleScope.launch(Dispatchers.Main) { tv.text = s }
         }
 
@@ -57,7 +67,13 @@ class Ex(private val tv: TextView, private val lifecycleScope: LifecycleCoroutin
         progress = Progress(150, R.string.open_db)
         val allCodedChat = ArrayList<CodedChat>()
         withContext(Dispatchers.IO) { addDByPath(database[0])?.let { allCodedChat.addAll(it) } } // 新数据库
-        if (database.size > 1) withContext(Dispatchers.IO) { addDByPath(database[1])?.let { allCodedChat.addAll(it) } } // 旧数据库
+        if (database.size > 1) withContext(Dispatchers.IO) {
+            addDByPath(database[1])?.let {
+                allCodedChat.addAll(
+                    it
+                )
+            }
+        } // 旧数据库
         progress = Progress(250, R.string.decode_db)
         val allChats = chatsDecode(allCodedChat) // 解码数据库
         progress = Progress(560, R.string.ex_html)
@@ -121,7 +137,8 @@ class Ex(private val tv: TextView, private val lifecycleScope: LifecycleCoroutin
                 val sender = fixedQQ
                 val data = fix(allChat[i].msg)
                 allChatDecode += Chat(time, type, sender, data)
-                if (i % 20 == 0) progress = progress.apply { per = ((i.toFloat() / allCount) * 300 + 250).toInt() }
+                if (i % 20 == 0) progress =
+                    progress.apply { per = ((i.toFloat() / allCount) * 300 + 250).toInt() }
             }
             allChatDecode.sortBy { it.time }
             return@withContext allChatDecode
@@ -130,17 +147,9 @@ class Ex(private val tv: TextView, private val lifecycleScope: LifecycleCoroutin
 
     private suspend fun toHtml(allChatDecode: ArrayList<Chat>) {
         withContext(Dispatchers.Default) {
-            val head = "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
-            var appendHtml = ""
             var appendStr = ""
-            withContext(Dispatchers.IO) {
-                val path0 = application.getExternalFilesDir("savedHtml")
-                File(path0, "${mmkv["exQQ", ""]}.html").apply { if (exists()) delete() }
-                val path1 = application.getExternalFilesDir("words")
-                File(path1, mmkv["exQQ", ""]).apply { if (exists()) delete() }
-            }
+            var list = ArrayList<ChatResult>(1000)
             for (i in allChatDecode.indices) {
-                if (i == 0) appendHtml += head
                 val item = allChatDecode[i]
                 try {
                     val htmlByTypeStr = htmlStrByType(item.type)
@@ -148,23 +157,16 @@ class Ex(private val tv: TextView, private val lifecycleScope: LifecycleCoroutin
                         appendStr += item.msg
                         item.msg
                     }
-                    appendHtml = "$appendHtml<font color=\"blue\">${getDateString(item.time)}" +
-                            "</font>-----<font color=\"green\">${item.sender}</font>" +
-                            "</br>$msg</br></br>"
+                    var chatRes = ChatResult(getDateString(item.time), item.type, item.sender, msg);
+                    list.add(chatRes);
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 30 == 0) { //每 30 条保存一次
-                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
-                    appendHtml = ""
-                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
-                    appendStr = ""
-                    progress = progress.apply { per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt() }
-                } else if (i == allChatDecode.size - 1) {
-                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
-                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
-                }
             }
+            var chatListObject = ChatListObject(list);
+            callApi(chatListObject)
+
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package qhaty.qqex.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import qhaty.qqex.databinding.FragHomeBinding
 import qhaty.qqex.method.Ex
 import qhaty.qqex.method.copyKeyUseRoot
 import qhaty.qqex.util.*
+import java.util.ArrayList
 
 class HomeFragment : BaseFragment() {
     private lateinit var binding: FragHomeBinding
@@ -20,11 +22,14 @@ class HomeFragment : BaseFragment() {
         return binding.root
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.apply {
-            etMy.setText(mmkv["myQQ", ""])
-            etEx.setText(mmkv["exQQ", ""])
+//            etMy.setText(mmkv["myQQ", ""])
+//            etEx.setText(mmkv["exQQ", ""])
+            etMy.setText("873692191")
+            etEx.setText("2451400604")
             btEx.setOnClickListener {
                 val myStr = etMy.text.toString()
                 val exStr = etEx.text.toString()

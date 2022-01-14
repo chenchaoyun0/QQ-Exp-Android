@@ -20,7 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="4dp"
-        android:hint="@string/your_qq"
+        android:text="@string/yourq"
         android:inputType="number" />
 
     <EditText
@@ -28,7 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="4dp"
-        android:hint="@string/ex_qq"
+        android:text="@string/exq"
         android:inputType="number" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

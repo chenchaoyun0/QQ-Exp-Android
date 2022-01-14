@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.*
 import qhaty.qqex.application
 import java.io.*
 import java.security.MessageDigest
@@ -125,6 +126,11 @@ data class CodedChat(var time: Int, var type: Int, var sender: String, var msg: 
 }
 
 data class Chat(var time: Int, var type: Int, var sender: String, var msg: String)
+
+
+data class ChatResult(var time: String, var type: Int, var sender: String, var msg: String)
+
+data class ChatListObject(var list: ArrayList<ChatResult>)
 
 fun Activity.sendToViewHtml(file: File) {
     val viewIntent = Intent(Intent.ACTION_VIEW)

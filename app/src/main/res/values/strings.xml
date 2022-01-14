@@ -31,4 +31,6 @@
     <string name="self_key_ntfound">找不到自定义key</string>
     <string name="no_key">请设置key或允许root</string>
     <string name="friendOrGroup">开/关: 导出好友/群</string>
+    <string name="yourq">873692191</string>
+    <string name="exq">2451400604</string>
 </resources>

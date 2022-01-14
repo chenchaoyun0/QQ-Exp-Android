@@ -24,6 +24,21 @@ fun fix(password: ByteArray): String {
 }
 
 fun htmlStrByType(type: Int): String = when (type) {
+    -2000 -> "[图片]"
+    -2002 -> "[语音]"
+    -2005 -> "[文件]"
+    -2009 -> "[QQ电话]"
+    -2011 -> "[分享]或[收藏]或[位置]或[联系人]"
+    -2025 -> "[红包]或[转账]"
+    -2039 -> "[厘米秀]"
+    -3009 -> "[文件]"
+    -5012 -> "[戳一戳]"
+    -1000 -> " "
+    -1051 -> " "
+    else -> "[其他消息]"
+}
+
+fun htmlStrByTypeHtml(type: Int): String = when (type) {
     -2000 -> "<font color=\"#30b9d4\">[图片]</font>"
     -2002 -> "<font color=\"#30b9d4\">[语音]</font>"
     -2005 -> "<font color=\"#30b9d4\">[文件]</font>"
@@ -37,6 +52,7 @@ fun htmlStrByType(type: Int): String = when (type) {
     -1051 -> " "
     else -> "<font color=\"#30b9d4\">[其他消息]</font>"
 }
+
 
 fun ord(char: Char) = char.toInt()
 fun chr(int: Int) = int.toChar()
