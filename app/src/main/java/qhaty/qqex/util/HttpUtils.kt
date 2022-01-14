@@ -1,6 +1,8 @@
 package qhaty.qqex.util
 
 import com.alibaba.fastjson.JSON
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -21,22 +23,25 @@ val client = OkHttpClient.Builder()
     .build();
 
 
-fun callApi(chatListObject: ChatListObject) {
-    var toJSON = JSON.toJSONString(chatListObject)
-    val requestBody: RequestBody = toJSON.toRequestBody(contenType)
-    var request = Request.Builder()
-        .url(urlAPI)
-        .post(requestBody)
-        .addHeader("Content-Type", "application/json")
-        .build()
-    client.newCall(request).enqueue(object : Callback {
-        override fun onResponse(call: Call, response: Response) {
-            val result = response.body?.string()
-            println("result: $result")
-        }
+suspend fun callApi(chatListObject: ChatListObject) {
+    withContext(Dispatchers.Default) {
+        var toJSON = JSON.toJSONString(chatListObject)
+        val requestBody: RequestBody = toJSON.toRequestBody(contenType)
+        var request = Request.Builder()
+            .url(urlAPI)
+            .post(requestBody)
+            .addHeader("Content-Type", "application/json")
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val result = response.body?.string()
+                println("result: $result")
+            }
 
-        override fun onFailure(call: Call, e: IOException) {
-            println("Failed request api :( " + e.message)
-        }
-    })
+            override fun onFailure(call: Call, e: IOException) {
+                println("Failed request api :( " + e.message)
+            }
+        })
+    }
+
 }

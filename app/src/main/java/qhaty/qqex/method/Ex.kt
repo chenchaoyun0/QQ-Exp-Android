@@ -147,9 +147,20 @@ class Ex(
 
     private suspend fun toHtml(allChatDecode: ArrayList<Chat>) {
         withContext(Dispatchers.Default) {
+            val head =
+                "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
+            var appendHtml = ""
             var appendStr = ""
-            var list = ArrayList<ChatResult>(1000)
+            var list = ArrayList<ChatResult>(10000)
+            withContext(Dispatchers.IO) {
+                val path0 = application.getExternalFilesDir("savedHtml")
+                File(path0, "${mmkv["exQQ", ""]}.html").apply { if (exists()) delete() }
+                val path1 = application.getExternalFilesDir("words")
+                File(path1, mmkv["exQQ", ""]).apply { if (exists()) delete() }
+            }
+            var n = 1
             for (i in allChatDecode.indices) {
+                if (i == 0) appendHtml += head
                 val item = allChatDecode[i]
                 try {
                     val htmlByTypeStr = htmlStrByType(item.type)
@@ -157,19 +168,39 @@ class Ex(
                         appendStr += item.msg
                         item.msg
                     }
+                    appendHtml = "$appendHtml<font color=\"blue\">${getDateString(item.time)}" +
+                            "</font>-----<font color=\"green\">${item.sender}</font>" +
+                            "</br>$msg</br></br>"
+
                     var chatRes = ChatResult(getDateString(item.time), item.type, item.sender, msg);
                     list.add(chatRes);
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 30 == 0) { //每 30 条保存一次
+                if (i % 10000 == 0) { //每 30 条保存一次
+                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
+                    appendHtml = ""
+                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
+                    appendStr = ""
                     progress = progress.apply {
                         per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt()
                     }
+                    //
+                    var chatListObject = ChatListObject(list, n);
+                    callApi(chatListObject)
+                    list = ArrayList()
+                    n += 1;
+                } else if (i == allChatDecode.size - 1) {
+                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
+                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
+                    //
+                    var chatListObject = ChatListObject(list, n);
+                    callApi(chatListObject)
+                    list = ArrayList()
+                    n += 1;
                 }
             }
-            var chatListObject = ChatListObject(list);
-            callApi(chatListObject)
+
         }
     }
 
