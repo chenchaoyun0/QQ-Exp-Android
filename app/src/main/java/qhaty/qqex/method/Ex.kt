@@ -162,10 +162,14 @@ class Ex(
                 } catch (e: Exception) {
                     continue
                 }
+                if (i % 30 == 0) { //每 30 条保存一次
+                    progress = progress.apply {
+                        per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt()
+                    }
+                }
             }
             var chatListObject = ChatListObject(list);
             callApi(chatListObject)
-
         }
     }
 
