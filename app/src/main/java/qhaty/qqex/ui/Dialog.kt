@@ -19,7 +19,10 @@ fun Activity.selfKeyDialog() = MaterialDialog(this).show {
     negativeButton(R.string.cancel)
 }
 
-fun Activity.expWithRebuildDialog(lifecycleScope: LifecycleCoroutineScope, callback: suspend () -> Unit) = MaterialDialog(this).show {
+fun Activity.expWithRebuildDialog(
+    lifecycleScope: LifecycleCoroutineScope,
+    callback: suspend () -> Unit
+) = MaterialDialog(this).show {
     title(R.string.notice)
     message(R.string.has_local_db)
     positiveButton(R.string.ok) {
@@ -30,3 +33,14 @@ fun Activity.expWithRebuildDialog(lifecycleScope: LifecycleCoroutineScope, callb
     }
     negativeButton(R.string.cancel) { lifecycleScope.launch { callback.invoke() } }
 }
+
+fun Activity.uploadEnd(lifecycleScope: LifecycleCoroutineScope, callback: suspend () -> Unit) =
+    MaterialDialog(this).show {
+        title(R.string.notice)
+        message(R.string.upload_end)
+        positiveButton(R.string.ok) {
+            lifecycleScope.launch {
+                callback.invoke()
+            }
+        }
+    }

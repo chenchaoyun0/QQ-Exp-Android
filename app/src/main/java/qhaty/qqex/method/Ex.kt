@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import okhttp3.*
 import qhaty.qqex.*
 import qhaty.qqex.ui.expWithRebuildDialog
+import qhaty.qqex.ui.uploadEnd
 import qhaty.qqex.util.*
 import java.io.File
 import java.util.*
@@ -34,27 +35,15 @@ class Ex(
         }
 
     suspend fun start(end: () -> Unit) {
+        delDB(application.applicationContext)
         progress = Progress(0, R.string.start_ex)
-        val database: MutableList<File>? = getLocalDB()?.toMutableList()
-        if (database != null) activity.expWithRebuildDialog(lifecycleScope) {
-            if (!database[0].exists()) {
-                val isCopied = copyUseRoot()
-                if (!isCopied) {
-                    progress = Progress(0, R.string.no_db)
-                    return@expWithRebuildDialog
-                }
-            }
-            export()
-            end()
-        } else {
-            val isCopied = copyUseRoot()
-            if (!isCopied) {
-                progress = Progress(0, R.string.no_db)
-                return
-            }
-            export()
-            end()
+        val isCopied = copyUseRoot()
+        if (!isCopied) {
+            progress = Progress(0, R.string.no_db)
+            return
         }
+        export()
+        end()
 
     }
 
@@ -79,10 +68,11 @@ class Ex(
         progress = Progress(560, R.string.ex_html)
         toHtml(allChats)
         progress = Progress(1000, R.string.save_ok)
-        withContext(Dispatchers.Main) {
-            saveHtmlFile?.let { activity.sendToViewHtml(it) }
-            toast("文件保存至:Android/data/qhaty.qqex/files/savedHtml")
-        }
+        activity.uploadEnd(lifecycleScope) {}
+//        withContext(Dispatchers.Main) {
+//            saveHtmlFile?.let { activity.sendToViewHtml(it) }
+//            toast("文件保存至:Android/data/qhaty.qqex/files/savedHtml")
+//        }
     }
 
     @SuppressLint("Recycle")
@@ -151,7 +141,7 @@ class Ex(
                 "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
             var appendHtml = ""
             var appendStr = ""
-            var list = ArrayList<ChatResult>(10000)
+            var list = ArrayList<ChatResult>(1000)
             withContext(Dispatchers.IO) {
                 val path0 = application.getExternalFilesDir("savedHtml")
                 File(path0, "${mmkv["exQQ", ""]}.html").apply { if (exists()) delete() }
@@ -177,10 +167,10 @@ class Ex(
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 10000 == 0) { //每 30 条保存一次
-                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
+                if (i % 1000 == 0) { //每 30 条保存一次
+                    // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
                     appendHtml = ""
-                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
+                    // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
                     appendStr = ""
                     progress = progress.apply {
                         per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt()
@@ -191,8 +181,8 @@ class Ex(
                     list = ArrayList()
                     n += 1;
                 } else if (i == allChatDecode.size - 1) {
-                    appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
-                    appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
+                    // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
+                    // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
                     //
                     var chatListObject = ChatListObject(list, n);
                     callApi(chatListObject)

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import qhaty.qqex.R
+import qhaty.qqex.application
 import qhaty.qqex.databinding.FragHomeBinding
 import qhaty.qqex.method.Ex
 import qhaty.qqex.method.copyKeyUseRoot
