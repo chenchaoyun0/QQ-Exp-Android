@@ -43,7 +43,7 @@ fun Activity.uploadEnd(
         title(R.string.notice)
         val minutes = cause / 1000 / 60
         val seconds = cause / 1000 % 60
-        message(R.string.upload_end, "耗时:${minutes}分${seconds}秒")
+        message(R.string.upload_end, "上传完成啦！总共耗时:${minutes}分${seconds}秒")
         positiveButton(R.string.ok) {
             lifecycleScope.launch {
                 callback.invoke()
