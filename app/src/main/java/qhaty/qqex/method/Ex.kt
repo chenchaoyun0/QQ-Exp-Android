@@ -167,7 +167,7 @@ class Ex(
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 1000 == 0) { //每 30 条保存一次
+                if (i % 10000 == 0) { //每 30 条保存一次
                     // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
                     appendHtml = ""
                     // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
