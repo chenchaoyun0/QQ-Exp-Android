@@ -9,7 +9,6 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import kotlinx.coroutines.*
 import okhttp3.*
 import qhaty.qqex.*
-import qhaty.qqex.ui.expWithRebuildDialog
 import qhaty.qqex.ui.uploadEnd
 import qhaty.qqex.util.*
 import java.io.File
@@ -137,9 +136,9 @@ class Ex(
 
     private suspend fun toHtml(allChatDecode: ArrayList<Chat>) {
         withContext(Dispatchers.Default) {
-            val head =
-                "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
-            var appendHtml = ""
+//            val head =
+//                "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
+//            var appendHtml = ""
             var appendStr = ""
             var list = ArrayList<ChatResult>(1000)
             withContext(Dispatchers.IO) {
@@ -150,7 +149,7 @@ class Ex(
             }
             var n = 1
             for (i in allChatDecode.indices) {
-                if (i == 0) appendHtml += head
+//                if (i == 0) appendHtml += head
                 val item = allChatDecode[i]
                 try {
                     val htmlByTypeStr = htmlStrByType(item.type)
@@ -158,20 +157,20 @@ class Ex(
                         appendStr += item.msg
                         item.msg
                     }
-                    appendHtml = "$appendHtml<font color=\"blue\">${getDateString(item.time)}" +
-                            "</font>-----<font color=\"green\">${item.sender}</font>" +
-                            "</br>$msg</br></br>"
+//                    appendHtml = "$appendHtml<font color=\"blue\">${getDateString(item.time)}" +
+//                            "</font>-----<font color=\"green\">${item.sender}</font>" +
+//                            "</br>$msg</br></br>"
 
                     var chatRes = ChatResult(getDateString(item.time), item.type, item.sender, msg);
                     list.add(chatRes);
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 10000 == 0) { //每 30 条保存一次
+                if (i % 1000 == 0) { //每 30 条保存一次
                     // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
-                    appendHtml = ""
+//                    appendHtml = ""
                     // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
-                    appendStr = ""
+//                    appendStr = ""
                     progress = progress.apply {
                         per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt()
                     }
