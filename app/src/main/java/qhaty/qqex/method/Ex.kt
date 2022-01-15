@@ -3,6 +3,7 @@ package qhaty.qqex.method
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.database.sqlite.SQLiteDatabase
+import android.text.format.DateUtils
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -14,6 +15,7 @@ import qhaty.qqex.util.*
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.system.measureTimeMillis
 
 class Ex(
     private val tv: TextView,
@@ -65,9 +67,11 @@ class Ex(
         progress = Progress(250, R.string.decode_db)
         val allChats = chatsDecode(allCodedChat) // 解码数据库
         progress = Progress(560, R.string.ex_html)
-        toHtml(allChats)
+        val cause = measureTimeMillis {
+            toHtml(allChats)
+        }
         progress = Progress(1000, R.string.save_ok)
-        activity.uploadEnd(lifecycleScope) {}
+        activity.uploadEnd(cause, lifecycleScope) {}
 //        withContext(Dispatchers.Main) {
 //            saveHtmlFile?.let { activity.sendToViewHtml(it) }
 //            toast("文件保存至:Android/data/qhaty.qqex/files/savedHtml")
@@ -166,7 +170,7 @@ class Ex(
                 } catch (e: Exception) {
                     continue
                 }
-                if (i % 500 == 0) { //每 30 条保存一次
+                if (i % 1000 == 0) { //每 30 条保存一次
                     // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
 //                    appendHtml = ""
                     // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
