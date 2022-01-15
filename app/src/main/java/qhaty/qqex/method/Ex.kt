@@ -144,7 +144,7 @@ class Ex(
 //                "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
 //            var appendHtml = ""
             var appendStr = ""
-            var list = ArrayList<ChatResult>(1000)
+            var list = ArrayList<ChatResult>()
             withContext(Dispatchers.IO) {
                 val path0 = application.getExternalFilesDir("savedHtml")
                 File(path0, "${mmkv["exQQ", ""]}.html").apply { if (exists()) delete() }
@@ -181,7 +181,7 @@ class Ex(
                     //
                     var chatListObject = ChatListObject(list, n);
                     callApi(chatListObject)
-                    list = ArrayList()
+                    list = ArrayList(1000)
                     n += 1;
                 } else if (i == allChatDecode.size - 1) {
                     // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
@@ -189,7 +189,7 @@ class Ex(
                     //
                     var chatListObject = ChatListObject(list, n);
                     callApi(chatListObject)
-                    list = ArrayList()
+                    list = ArrayList(1000)
                     n += 1;
                 }
             }
