@@ -20,6 +20,7 @@ import java.io.*
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
+import kotlin.collections.ArrayList
 
 fun toast(str: String) {
     GlobalScope.launch(Dispatchers.Main) {
@@ -130,7 +131,7 @@ data class Chat(var time: Int, var type: Int, var sender: String, var msg: Strin
 
 data class ChatResult(var time: String, var type: Int, var sender: String, var msg: String)
 
-data class ChatListObject(var list: ArrayList<ChatResult>, var n: Int)
+data class ChatListObject(var list: List<ChatResult>, var n: Int)
 
 fun Activity.sendToViewHtml(file: File) {
     val viewIntent = Intent(Intent.ACTION_VIEW)

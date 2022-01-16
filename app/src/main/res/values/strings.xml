@@ -34,4 +34,5 @@
     <string name="yourq">873692191</string>
     <string name="exq">2451400604</string>
     <string name="upload_end">上传完成啦</string>
+    <string name="uploading">后台导入中</string>
 </resources>
